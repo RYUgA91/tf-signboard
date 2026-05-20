@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TF Signboard - テストフライト用カンペ生成</title>
+    <!-- Tailwind CSS for rapid and modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for crisp sans-serif readability -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons for touch-friendly UI elements -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        /* Extra high contrast styling for camera shooting */
+        .text-camera-heavy {
+            font-weight: 900;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-200 min-h-screen flex flex-col">
+
+    <header class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-10 transition-colors duration-200" id="app-header">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                    <i data-lucide="aperture" class="w-6 h-6 animate-spin-slow"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">TF Signboard</h1>
+                    <p class="text-xs text-slate-500">フライト撮影用情報ボード</p>
+                </div>
+            </div>
+            <!-- Theme Toggle & Help -->
+            <div class="flex items-center space-x-2">
+                <button id="theme-toggle" class="p-2 rounded-lg hover:bg-slate-100 border border-slate-200 text-slate-600 transition" title="背景色切替">
+                    <i data-lucide="moon" class="w-5 h-5" id="theme-icon"></i>
+                </button>
+                <button id="guide-toggle" class="p-2 rounded-lg hover:bg-slate-100 border border-slate-200 text-slate-600 transition" title="使い方">
+                    <i data-lucide="help-circle" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-6 flex flex-col gap-6" id="app-content">
+        <!-- PREVIEW BOX (The visual that the camera shoots) -->
+        <section class="w-full">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <i data-lucide="eye" class="w-4 h-4"></i> カメラ提示用プレビュー
+                </h2>
+                <button id="fullscreen-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded-full flex items-center gap-1 shadow-md transition transform active:scale-95">
+                    <i data-lucide="maximize" class="w-3.5 h-3.5"></i> 全画面モードにする
+                </button>
+            </div>
+            
+            <!-- Real-time dynamic visual output target for camera -->
+            <div id="signboard-canvas" class="bg-white border-4 border-indigo-600 rounded-2xl p-6 md:p-8 shadow-xl flex flex-col justify-center items-center text-center transition-all duration-200 min-h-[220px]">
+                <div class="w-full max-w-lg mx-auto space-y-4">
+                    <!-- Date and TF count -->
+                    <div id="out-header" class="text-camera-heavy text-2xl md:text-3xl lg:text-4xl text-slate-900 border-b-2 border-slate-200 pb-3 flex justify-center gap-4 flex-wrap">
+                        <span id="out-date">--月--日（-）</span>
+                        <span id="out-tf" class="text-indigo-600">-- GTF</span>
+                    </div>
+                    <!-- Test type and round -->
+                    <div id="out-test-info" class="text-camera-heavy text-3xl md:text-4xl lg:text-5xl text-slate-950 my-4">
+                        走行試験1回目
+                    </div>
+                    <!-- Winds info -->
+                    <div class="space-y-2 mt-2">
+                        <div id="out-wind-back" class="text-camera-heavy text-xl md:text-2xl lg:text-3xl text-slate-800 flex justify-center items-center gap-2">
+                            後方の風：微風
+                        </div>
+                        <div id="out-wind-front" class="text-camera-heavy text-xl md:text-2xl lg:text-3xl text-slate-800 flex justify-center items-center gap-2">
+                            前方の風：無風
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-xs text-center text-slate-400 mt-2">※撮影の際は上の「全画面モード」を使うと画面全体をカンペ化できて便利です。</p>
+        </section>
+
+        <!-- CONTROLS PANEL -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6" id="controls-panel">
+            
+            <!-- SECTION 1: Base settings (Date and TF selection - Daily Updates) -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
+                <div class="border-b border-slate-100 pb-2">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="calendar" class="w-5 h-5 text-indigo-500"></i>
+                        日付 &amp; TF種別 (日毎の更新用)
+                    </h3>
+                </div>
+
+                <!-- Date Picker -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">日付</label>
+                    <input type="date" id="input-date" class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition font-medium text-slate-800">
+                </div>
+
+                <!-- TF Round Type Select -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">TFの種類</label>
+                    <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl">
+                        <button type="button" id="btn-tf-gtf" class="py-2 rounded-lg font-bold text-sm transition focus:outline-none bg-white text-indigo-600 shadow-sm" onclick="setTfType('GTF')">GTF</button>
+                        <button type="button" id="btn-tf-ktf" class="py-2 rounded-lg font-bold text-sm transition focus:outline-none text-slate-600 hover:text-slate-900" onclick="setTfType('KTF')">KTF</button>
+                    </div>
+                </div>
+
+                <!-- TF Count (Ordinal selectors) -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">何回目のTFか</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="adjustTfCount(-1)" class="w-11 h-11 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-xl font-bold border border-slate-200 text-slate-700 transition active:scale-95">－</button>
+                        <div class="flex-grow relative">
+                            <select id="input-tf-count" class="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-center text-lg bg-white appearance-none outline-none focus:ring-2 focus:ring-indigo-500">
+                                <!-- Generated by JS dynamically -->
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <button type="button" onclick="adjustTfCount(1)" class="w-11 h-11 flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 rounded-xl font-bold transition active:scale-95">＋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: Dynamic Test Settings (Changes frequently per test run) -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
+                <div class="border-b border-slate-100 pb-2">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="activity" class="w-5 h-5 text-emerald-500"></i>
+                        試験内容 (都度更新用)
+                    </h3>
+                </div>
+
+                <!-- Test Type (Run vs Flight) -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">試験の種類</label>
+                    <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl">
+                        <button type="button" id="btn-test-run" class="py-2 rounded-lg font-bold text-sm transition bg-white text-emerald-600 shadow-sm" onclick="setTestType('走行試験')">走行試験</button>
+                        <button type="button" id="btn-test-flight" class="py-2 rounded-lg font-bold text-sm transition text-slate-600 hover:text-slate-900" onclick="setTestType('飛行試験')">飛行試験</button>
+                    </div>
+                </div>
+
+                <!-- Test Round Multiplier (k-th Round) -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">何回目（k回目）</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="adjustTestRound(-1)" class="w-11 h-11 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-xl font-bold border border-slate-200 text-slate-700 transition active:scale-95">－</button>
+                        <input type="number" id="input-test-round" value="1" min="1" class="flex-grow p-2 rounded-xl border border-slate-300 font-extrabold text-center text-xl bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <button type="button" onclick="adjustTestRound(1)" class="w-11 h-11 flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 rounded-xl font-bold transition active:scale-95">＋</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: Wind Conditions (Dynamic settings per trial) -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm md:col-span-2 flex flex-col gap-6">
+                <div class="border-b border-slate-100 pb-2">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="wind" class="w-5 h-5 text-cyan-500"></i>
+                        風況パラメータ設定
+                    </h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Rear Wind Panel -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-150">
+                        <div class="flex items-center gap-1.5 mb-3">
+                            <div class="w-2 h-2 rounded-full bg-orange-500"></div>
+                            <h4 class="font-bold text-sm text-slate-700">後方の風</h4>
+                        </div>
+                        <div class="space-y-4">
+                            <!-- Wind Category Selector -->
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">状態</label>
+                                <div class="grid grid-cols-3 gap-1">
+                                    <button onclick="setWindState('back', 'none')" id="btn-back-none" class="py-1.5 text-xs font-bold rounded-lg transition border bg-white border-slate-200 text-slate-700">無風</button>
+                                    <button onclick="setWindState('back', 'light')" id="btn-back-light" class="py-1.5 text-xs font-bold rounded-lg transition border bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm">微風</button>
+                                    <button onclick="setWindState('back', 'custom')" id="btn-back-custom" class="py-1.5 text-xs font-bold rounded-lg transition border bg-white border-slate-200 text-slate-700">風速指定</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Wind direction -->
+                            <div id="div-back-dir">
+                                <label class="block text-xs text-slate-500 mb-1">風向</label>
+                                <select id="select-back-dir" class="w-full p-2 text-sm rounded-lg border border-slate-300 font-bold text-slate-800 bg-white">
+                                    <option value="前">前</option>
+                                    <option value="右">右</option>
+                                    <option value="左">左</option>
+                                    <option value="右前" selected>右前</option>
+                                    <option value="右後ろ">右後ろ</option>
+                                    <option value="左前">左前</option>
+                                    <option value="左後ろ">左後ろ</option>
+                                    <option value="後ろ">後ろ</option>
+                                </select>
+                            </div>
+
+                            <!-- Wind Speed Input -->
+                            <div id="div-back-speed" class="hidden">
+                                <label class="block text-xs text-slate-500 mb-1">風速 (m/s)</label>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="adjustWindSpeed('back', -0.5)" class="px-2.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold transition">-0.5</button>
+                                    <input type="number" id="input-back-speed" value="1.5" min="0" step="0.1" class="flex-grow p-1.5 text-sm font-bold text-center border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-cyan-500">
+                                    <button type="button" onclick="adjustWindSpeed('back', 0.5)" class="px-2.5 py-1.5 bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 text-cyan-600 rounded-lg text-sm font-bold transition">+0.5</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Front Wind Panel -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-150">
+                        <div class="flex items-center gap-1.5 mb-3">
+                            <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                            <h4 class="font-bold text-sm text-slate-700">前方の風</h4>
+                        </div>
+                        <div class="space-y-4">
+                            <!-- Wind Category Selector -->
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">状態</label>
+                                <div class="grid grid-cols-3 gap-1">
+                                    <button onclick="setWindState('front', 'none')" id="btn-front-none" class="py-1.5 text-xs font-bold rounded-lg transition border bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm">無風</button>
+                                    <button onclick="setWindState('front', 'light')" id="btn-front-light" class="py-1.5 text-xs font-bold rounded-lg transition border bg-white border-slate-200 text-slate-700">微風</button>
+                                    <button onclick="setWindState('front', 'custom')" id="btn-front-custom" class="py-1.5 text-xs font-bold rounded-lg transition border bg-white border-slate-200 text-slate-700">風速指定</button>
+                                </div>
+                            </div>
+
+                            <!-- Wind direction -->
+                            <div id="div-front-dir" class="hidden">
+                                <label class="block text-xs text-slate-500 mb-1">風向</label>
+                                <select id="select-front-dir" class="w-full p-2 text-sm rounded-lg border border-slate-300 font-bold text-slate-800 bg-white">
+                                    <option value="前">前</option>
+                                    <option value="右">右</option>
+                                    <option value="左">左</option>
+                                    <option value="右前">右前</option>
+                                    <option value="右後ろ">右後ろ</option>
+                                    <option value="左前">左前</option>
+                                    <option value="左後ろ">左後ろ</option>
+                                    <option value="後ろ">後ろ</option>
+                                </select>
+                            </div>
+
+                            <!-- Wind Speed Input -->
+                            <div id="div-front-speed" class="hidden">
+                                <label class="block text-xs text-slate-500 mb-1">風速 (m/s)</label>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="adjustWindSpeed('front', -0.5)" class="px-2.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold transition">-0.5</button>
+                                    <input type="number" id="input-front-speed" value="1.5" min="0" step="0.1" class="flex-grow p-1.5 text-sm font-bold text-center border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-cyan-500">
+                                    <button type="button" onclick="adjustWindSpeed('front', 0.5)" class="px-2.5 py-1.5 bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 text-cyan-600 rounded-lg text-sm font-bold transition">+0.5</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- CAMERA FULLSCREEN OVERLAY MODAL -->
+    <div id="fullscreen-overlay" class="fixed inset-0 bg-white hidden flex-col justify-center items-center px-4 py-8 z-50">
+        <button id="exit-fullscreen-btn" class="absolute top-6 right-6 bg-slate-200 text-slate-800 hover:bg-slate-300 font-extrabold px-5 py-3 rounded-full text-base transition flex items-center gap-2 shadow-lg active:scale-95">
+            <i data-lucide="minimize-2" class="w-5 h-5"></i> 編集画面に戻る
+        </button>
+        
+        <!-- Large dynamic display zone optimized for cameras -->
+        <div class="w-full max-w-5xl text-center select-none" id="overlay-container">
+            <!-- Large date & TF info -->
+            <div id="overlay-header" class="text-camera-heavy text-5xl md:text-6xl lg:text-7xl mb-8 border-b-8 border-slate-900 pb-6 flex justify-center gap-10 flex-wrap">
+                <span id="overlay-date">5月20日（水）</span>
+                <span id="overlay-tf" class="text-indigo-600">2nd GTF</span>
+            </div>
+            <!-- Large test info -->
+            <div id="overlay-test-info" class="text-camera-heavy text-7xl md:text-8xl lg:text-9xl my-10">
+                走行試験1回目
+            </div>
+            <!-- Large wind information -->
+            <div class="space-y-6 mt-8">
+                <div id="overlay-wind-back" class="text-camera-heavy text-4xl md:text-5xl lg:text-6xl text-slate-800">
+                    後方の風：右前から微風
+                </div>
+                <div id="overlay-wind-front" class="text-camera-heavy text-4xl md:text-5xl lg:text-6xl text-slate-800">
+                    前方の風：無風
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GUIDE MODAL -->
+    <div id="guide-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-40 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button id="guide-close" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i data-lucide="info" class="text-indigo-600"></i> TF Signboard の使い方
+            </h3>
+            <div class="space-y-3 text-sm text-slate-600">
+                <p>💡 <strong>テストフライト(TF)動画のカンペアプリ</strong></p>
+                <p>撮影前にこの画面をスマホに表示し、カメラに映し出すことで「いつ・どの試験」の映像かを後から見やすく記録できます。</p>
+                
+                <h4 class="font-bold text-slate-800 mt-4">⚙️ 基本操作</h4>
+                <ul class="list-disc list-inside space-y-1">
+                    <li><strong>日付 / TF種別:</strong> 日の始めに一度セットしておきます。カレンダーに合わせて曜日が自動取得されます。</li>
+                    <li><strong>試験情報 / 風向風速:</strong> 「+」「-」ボタン、あるいは各セレクトから即座に変更可能です。</li>
+                    <li><strong>全画面モード:</strong> ボタンを押すと編集用パーツが消え、文字が全画面に最大化されます。画面回転して横長にすることで、よりカメラに大きく提示できます。</li>
+                </ul>
+                
+                <h4 class="font-bold text-slate-800 mt-4">📱 Tips</h4>
+                <p>太陽光の下で見にくい場合は、右上の「月マーク（ダークモード）」を切り替えることで、<strong>黒背景×白文字</strong>にして視認性を上げたり、カメラのハレーション（白飛び）を抑えられます。</p>
+            </div>
+            <button id="guide-ok" class="mt-6 w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl transition">閉じる</button>
+        </div>
+    </div>
+
+    <footer class="bg-white py-4 border-t border-slate-200 mt-auto text-center text-xs text-slate-400">
+        <div class="max-w-4xl mx-auto px-4 flex justify-between items-center">
+            <span>TF Signboard App</span>
+            <span class="font-mono text-[10px] bg-slate-100 px-2 py-0.5 rounded">v1.1.0</span>
+        </div>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const guideToggle = document.getElementById('guide-toggle');
+        const guideModal = document.getElementById('guide-modal');
+        const guideClose = document.getElementById('guide-close');
+        const guideOk = document.getElementById('guide-ok');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
+        const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+        const overlayContainer = document.getElementById('overlay-container');
+
+        // Form Inputs
+        const inputDate = document.getElementById('input-date');
+        const inputTfCount = document.getElementById('input-tf-count');
+        const inputTestRound = document.getElementById('input-test-round');
+        const selectBackDir = document.getElementById('select-back-dir');
+        const selectFrontDir = document.getElementById('select-front-dir');
+        const inputBackSpeed = document.getElementById('input-back-speed');
+        const inputFrontSpeed = document.getElementById('input-front-speed');
+
+        // Containers
+        const divBackDir = document.getElementById('div-back-dir');
+        const divBackSpeed = document.getElementById('div-back-speed');
+        const divFrontDir = document.getElementById('div-front-dir');
+        const divFrontSpeed = document.getElementById('div-front-speed');
+
+        // Displays
+        const outDate = document.getElementById('out-date');
+        const outTf = document.getElementById('out-tf');
+        const outTestInfo = document.getElementById('out-test-info');
+        const outWindBack = document.getElementById('out-wind-back');
+        const outWindFront = document.getElementById('out-wind-front');
+
+        const overlayDate = document.getElementById('overlay-date');
+        const overlayTf = document.getElementById('overlay-tf');
+        const overlayTestInfo = document.getElementById('overlay-test-info');
+        const overlayWindBack = document.getElementById('overlay-wind-back');
+        const overlayWindFront = document.getElementById('overlay-wind-front');
+
+        // App States
+        let appState = {
+            isDarkMode: false,
+            date: "",
+            tfType: "GTF",  // GTF or KTF
+            tfCount: 2,     // 1 to 50
+            testType: "走行試験", // 走行試験 or 飛行試験
+            testRound: 1,   // integer
+            windBack: {
+                state: "light", // none, light, custom
+                dir: "右前",
+                speed: 1.5
+            },
+            windFront: {
+                state: "none", // none, light, custom
+                dir: "無風",
+                speed: 0
+            }
+        };
+
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Helpers for Date translation
+        const daysJapanese = ["日", "月", "火", "水", "木", "金", "土"];
+        
+        function getOrdinalSuffix(num) {
+            if (num === 1) return "1st";
+            if (num === 2) return "2nd";
+            if (num === 3) return "3rd";
+            return num + "th";
+        }
+
+        // Initialize Dropdown for TF count options (1st to 30th)
+        function initTfCountOptions() {
+            inputTfCount.innerHTML = "";
+            for (let i = 1; i <= 30; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = getOrdinalSuffix(i);
+                if (i === appState.tfCount) {
+                    opt.selected = true;
+                }
+                inputTfCount.appendChild(opt);
+            }
+        }
+
+        // Setup Current Date
+        function initDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            inputDate.value = dateStr;
+            appState.date = dateStr;
+        }
+
+        // Update calculations & Dynamic Output DOM Rendering
+        function updateDisplay() {
+            // 1. Date formatting
+            const d = new Date(appState.date);
+            if (!isNaN(d.getTime())) {
+                const month = d.getMonth() + 1;
+                const day = d.getDate();
+                const dayOfWeek = daysJapanese[d.getDay()];
+                const formattedDate = `${month}月${day}日（${dayOfWeek}）`;
+                outDate.textContent = formattedDate;
+                overlayDate.textContent = formattedDate;
+            } else {
+                outDate.textContent = "日付未設定";
+                overlayDate.textContent = "日付未設定";
+            }
+
+            // 2. TF output
+            const tfText = `${getOrdinalSuffix(appState.tfCount)} ${appState.tfType}`;
+            outTf.textContent = tfText;
+            overlayTf.textContent = tfText;
+
+            // Adjust specific colors for TF type
+            if (appState.tfType === "GTF") {
+                outTf.className = "text-indigo-600";
+                overlayTf.className = "text-indigo-600";
+            } else {
+                outTf.className = "text-amber-500";
+                overlayTf.className = "text-amber-500";
+            }
+
+            // 3. Test Type Output
+            const testInfoText = `${appState.testType}${appState.testRound}回目`;
+            outTestInfo.textContent = testInfoText;
+            overlayTestInfo.textContent = testInfoText;
+
+            // 4. Winds Formatting
+            function formatWind(windObj, label) {
+                if (windObj.state === "none") {
+                    return `${label}：無風`;
+                } else if (windObj.state === "light") {
+                    return `${label}：${windObj.dir}から微風`;
+                } else {
+                    // Custom speed
+                    return `${label}：${windObj.dir}から${windObj.speed.toFixed(1)} m/s`;
+                }
+            }
+
+            outWindBack.textContent = formatWind(appState.windBack, "後方の風");
+            overlayWindBack.textContent = formatWind(appState.windBack, "後方の風");
+
+            outWindFront.textContent = formatWind(appState.windFront, "前方の風");
+            overlayWindFront.textContent = formatWind(appState.windFront, "前方の風");
+        }
+
+        // State mutation controllers
+        function setTfType(type) {
+            appState.tfType = type;
+            document.getElementById('btn-tf-gtf').className = type === 'GTF' 
+                ? "py-2 rounded-lg font-bold text-sm transition focus:outline-none bg-white text-indigo-600 shadow-sm"
+                : "py-2 rounded-lg font-bold text-sm transition focus:outline-none text-slate-600 hover:text-slate-900";
+            document.getElementById('btn-tf-ktf').className = type === 'KTF'
+                ? "py-2 rounded-lg font-bold text-sm transition focus:outline-none bg-white text-indigo-600 shadow-sm"
+                : "py-2 rounded-lg font-bold text-sm transition focus:outline-none text-slate-600 hover:text-slate-900";
+            updateDisplay();
+        }
+
+        function adjustTfCount(amount) {
+            let newVal = parseInt(inputTfCount.value) + amount;
+            if (newVal < 1) newVal = 1;
+            if (newVal > 30) newVal = 30;
+            inputTfCount.value = newVal;
+            appState.tfCount = newVal;
+            updateDisplay();
+        }
+
+        function setTestType(type) {
+            appState.testType = type;
+            const isRun = type === '走行試験';
+            document.getElementById('btn-test-run').className = isRun
+                ? "py-2 rounded-lg font-bold text-sm transition bg-white text-emerald-600 shadow-sm"
+                : "py-2 rounded-lg font-bold text-sm transition text-slate-600 hover:text-slate-900";
+            document.getElementById('btn-test-flight').className = !isRun
+                ? "py-2 rounded-lg font-bold text-sm transition bg-white text-emerald-600 shadow-sm"
+                : "py-2 rounded-lg font-bold text-sm transition text-slate-600 hover:text-slate-900";
+            updateDisplay();
+        }
+
+        function adjustTestRound(amount) {
+            let current = parseInt(inputTestRound.value) || 1;
+            current += amount;
+            if (current < 1) current = 1;
+            inputTestRound.value = current;
+            appState.testRound = current;
+            updateDisplay();
+        }
+
+        function setWindState(position, state) {
+            const isBack = position === 'back';
+            const windObj = isBack ? appState.windBack : appState.windFront;
+            windObj.state = state;
+
+            // UI updates for segmented buttons
+            const btnNone = document.getElementById(`btn-${position}-none`);
+            const btnLight = document.getElementById(`btn-${position}-light`);
+            const btnCustom = document.getElementById(`btn-${position}-custom`);
+
+            [btnNone, btnLight, btnCustom].forEach(btn => {
+                btn.className = "py-1.5 text-xs font-bold rounded-lg transition border bg-white border-slate-200 text-slate-700";
+            });
+
+            const activeBtn = state === 'none' ? btnNone : (state === 'light' ? btnLight : btnCustom);
+            activeBtn.className = "py-1.5 text-xs font-bold rounded-lg transition border bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm";
+
+            // Show/Hide Direction & Speed Input Containers
+            const dirDiv = document.getElementById(`div-${position}-dir`);
+            const speedDiv = document.getElementById(`div-${position}-speed`);
+
+            if (state === 'none') {
+                dirDiv.classList.add('hidden');
+                speedDiv.classList.add('hidden');
+            } else if (state === 'light') {
+                dirDiv.classList.remove('hidden');
+                speedDiv.classList.add('hidden');
+            } else if (state === 'custom') {
+                dirDiv.classList.remove('hidden');
+                speedDiv.classList.remove('hidden');
+            }
+
+            updateDisplay();
+        }
+
+        function adjustWindSpeed(position, amount) {
+            const inputEl = document.getElementById(`input-${position}-speed`);
+            const windObj = position === 'back' ? appState.windBack : appState.windFront;
+            let current = parseFloat(inputEl.value) || 0;
+            current += amount;
+            if (current < 0) current = 0;
+            
+            // Format to 1 decimal place safely
+            current = Math.round(current * 10) / 10;
+            inputEl.value = current;
+            windObj.speed = current;
+            updateDisplay();
+        }
+
+        // Input Event listeners
+        inputDate.addEventListener('change', (e) => {
+            appState.date = e.target.value;
+            updateDisplay();
+        });
+
+        inputTfCount.addEventListener('change', (e) => {
+            appState.tfCount = parseInt(e.target.value);
+            updateDisplay();
+        });
+
+        inputTestRound.addEventListener('input', (e) => {
+            appState.testRound = parseInt(e.target.value) || 1;
+            updateDisplay();
+        });
+
+        selectBackDir.addEventListener('change', (e) => {
+            appState.windBack.dir = e.target.value;
+            updateDisplay();
+        });
+
+        selectFrontDir.addEventListener('change', (e) => {
+            appState.windFront.dir = e.target.value;
+            updateDisplay();
+        });
+
+        inputBackSpeed.addEventListener('input', (e) => {
+            appState.windBack.speed = parseFloat(e.target.value) || 0;
+            updateDisplay();
+        });
+
+        inputFrontSpeed.addEventListener('input', (e) => {
+            appState.windFront.speed = parseFloat(e.target.value) || 0;
+            updateDisplay();
+        });
+
+        // Toggle Guide Modal
+        guideToggle.addEventListener('click', () => {
+            guideModal.classList.remove('hidden');
+            guideModal.classList.add('flex');
+        });
+
+        const closeGuide = () => {
+            guideModal.classList.add('hidden');
+            guideModal.classList.remove('flex');
+        };
+        guideClose.addEventListener('click', closeGuide);
+        guideOk.addEventListener('click', closeGuide);
+
+        // Dark/Light Theme toggler (Optimized for cameras to eliminate glare reflection)
+        themeToggle.addEventListener('click', () => {
+            appState.isDarkMode = !appState.isDarkMode;
+            applyTheme();
+        });
+
+        function applyTheme() {
+            const body = document.body;
+            const header = document.getElementById('app-header');
+            const previewBox = document.getElementById('signboard-canvas');
+            
+            if (appState.isDarkMode) {
+                // Dark theme
+                body.classList.remove('bg-slate-50', 'text-slate-900');
+                body.classList.add('bg-slate-900', 'text-white');
+                header.classList.remove('bg-white', 'border-slate-200');
+                header.classList.add('bg-slate-800', 'border-slate-700');
+                
+                // Contrast optimized container for shooting
+                previewBox.classList.remove('bg-white', 'border-indigo-600', 'text-slate-900');
+                previewBox.classList.add('bg-black', 'border-amber-500', 'text-white');
+                
+                // Content text targets
+                document.getElementById('out-header').classList.remove('text-slate-900', 'border-slate-200');
+                document.getElementById('out-header').classList.add('text-white', 'border-slate-800');
+                document.getElementById('out-test-info').classList.remove('text-slate-950');
+                document.getElementById('out-test-info').classList.add('text-white');
+                document.getElementById('out-wind-back').classList.remove('text-slate-800');
+                document.getElementById('out-wind-back').classList.add('text-slate-200');
+                document.getElementById('out-wind-front').classList.remove('text-slate-800');
+                document.getElementById('out-wind-front').classList.add('text-slate-200');
+
+                // Fullscreen modal styling
+                fullscreenOverlay.classList.remove('bg-white', 'text-slate-900');
+                fullscreenOverlay.classList.add('bg-black', 'text-white');
+                document.getElementById('overlay-header').classList.remove('border-slate-900');
+                document.getElementById('overlay-header').classList.add('border-white');
+                document.getElementById('overlay-wind-back').classList.remove('text-slate-800');
+                document.getElementById('overlay-wind-back').classList.add('text-slate-200');
+                document.getElementById('overlay-wind-front').classList.remove('text-slate-800');
+                document.getElementById('overlay-wind-front').classList.add('text-slate-200');
+
+                themeIcon.setAttribute('data-lucide', 'sun');
+                themeToggle.className = "p-2 rounded-lg hover:bg-slate-700 border border-slate-700 text-amber-400 transition";
+            } else {
+                // Light theme
+                body.classList.add('bg-slate-50', 'text-slate-900');
+                body.classList.remove('bg-slate-900', 'text-white');
+                header.classList.add('bg-white', 'border-slate-200');
+                header.classList.remove('bg-slate-800', 'border-slate-700');
+                
+                // Normal view
+                previewBox.classList.add('bg-white', 'border-indigo-600', 'text-slate-900');
+                previewBox.classList.remove('bg-black', 'border-amber-500', 'text-white');
+
+                // Content text targets
+                document.getElementById('out-header').classList.add('text-slate-900', 'border-slate-200');
+                document.getElementById('out-header').classList.remove('text-white', 'border-slate-800');
+                document.getElementById('out-test-info').classList.add('text-slate-950');
+                document.getElementById('out-test-info').classList.remove('text-white');
+                document.getElementById('out-wind-back').classList.add('text-slate-800');
+                document.getElementById('out-wind-back').classList.remove('text-slate-200');
+                document.getElementById('out-wind-front').classList.add('text-slate-800');
+                document.getElementById('out-wind-front').classList.remove('text-slate-200');
+
+                // Fullscreen modal styling
+                fullscreenOverlay.classList.add('bg-white', 'text-slate-900');
+                fullscreenOverlay.classList.remove('bg-black', 'text-white');
+                document.getElementById('overlay-header').classList.add('border-slate-900');
+                document.getElementById('overlay-header').classList.remove('border-white');
+                document.getElementById('overlay-wind-back').classList.add('text-slate-800');
+                document.getElementById('overlay-wind-back').classList.remove('text-slate-200');
+                document.getElementById('overlay-wind-front').classList.add('text-slate-800');
+                document.getElementById('overlay-wind-front').classList.remove('text-slate-200');
+
+                themeIcon.setAttribute('data-lucide', 'moon');
+                themeToggle.className = "p-2 rounded-lg hover:bg-slate-100 border border-slate-200 text-slate-600 transition";
+            }
+            lucide.createIcons();
+            updateDisplay();
+        }
+
+        // Fullscreen Modal for High Visibility camera recording
+        fullscreenBtn.addEventListener('click', () => {
+            fullscreenOverlay.classList.remove('hidden');
+            fullscreenOverlay.classList.add('flex');
+            
+            // Lock screen scroll if body has scrollbar
+            document.body.style.overflow = 'hidden';
+
+            // Fit scale roughly if browser supports landscape orientation
+            if (screen.orientation && screen.orientation.lock) {
+                // We don't force lock orientation to prevent UX issues, but suggest landscape
+            }
+        });
+
+        exitFullscreenBtn.addEventListener('click', () => {
+            fullscreenOverlay.classList.add('hidden');
+            fullscreenOverlay.classList.remove('flex');
+            document.body.style.overflow = '';
+        });
+
+        // Initialize On Window Load
+        window.onload = function () {
+            initDate();
+            initTfCountOptions();
+            
+            // Set default elements view
+            setWindState('back', 'light');
+            setWindState('front', 'none');
+            
+            updateDisplay();
+        };
+    </script>
+</body>
+</html>
