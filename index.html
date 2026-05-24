@@ -100,11 +100,11 @@
                     </div>
                     <!-- Winds info -->
                     <div class="space-y-2 mt-2">
-                        <div id="out-wind-back" class="text-camera-heavy text-xl md:text-2xl lg:text-3xl text-slate-800 flex justify-center items-center gap-2">
-                            後方の風：微風
-                        </div>
                         <div id="out-wind-front" class="text-camera-heavy text-xl md:text-2xl lg:text-3xl text-slate-800 flex justify-center items-center gap-2">
                             前方の風：微風
+                        </div>
+                        <div id="out-wind-back" class="text-camera-heavy text-xl md:text-2xl lg:text-3xl text-slate-800 flex justify-center items-center gap-2">
+                            後方の風：微風
                         </div>
                     </div>
                 </div>
@@ -196,50 +196,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Rear Wind Panel -->
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-150">
-                        <div class="flex items-center gap-1.5 mb-3">
-                            <div class="w-2 h-2 rounded-full bg-orange-500"></div>
-                            <h4 class="font-bold text-sm text-slate-700">後方の風</h4>
-                        </div>
-                        <div class="space-y-4">
-                            <!-- Wind Category Selector -->
-                            <div>
-                                <label class="block text-xs text-slate-500 mb-1">状態</label>
-                                <div class="grid grid-cols-3 gap-1">
-                                    <button onclick="setWindState('back', 'none')" id="btn-back-none" class="py-1.5 text-xs font-bold rounded-lg transition border bg-white border-slate-200 text-slate-700">無風</button>
-                                    <button onclick="setWindState('back', 'light')" id="btn-back-light" class="py-1.5 text-xs font-bold rounded-lg transition border bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm">微風</button>
-                                    <button onclick="setWindState('back', 'custom')" id="btn-back-custom" class="py-1.5 text-xs font-bold rounded-lg transition border bg-white border-slate-200 text-slate-700">風速指定</button>
-                                </div>
-                            </div>
-                            
-                            <!-- Wind direction -->
-                            <div id="div-back-dir">
-                                <label class="block text-xs text-slate-500 mb-1">風向</label>
-                                <select id="select-back-dir" class="w-full p-2 text-sm rounded-lg border border-slate-300 font-bold text-slate-800 bg-white">
-                                    <option value="前">前</option>
-                                    <option value="右">右</option>
-                                    <option value="左">左</option>
-                                    <option value="後ろ">後ろ</option>
-                                    <option value="右前" selected>右前</option>
-                                    <option value="右後ろ">右後ろ</option>
-                                    <option value="左前">左前</option>
-                                    <option value="左後ろ">左後ろ</option>
-                                </select>
-                            </div>
-
-                            <!-- Wind Speed Input -->
-                            <div id="div-back-speed" class="hidden">
-                                <label class="block text-xs text-slate-500 mb-1">風速 (m/s)</label>
-                                <div class="flex items-center gap-2">
-                                    <button type="button" onclick="adjustWindSpeed('back', -0.5)" class="px-0.5 py-2 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold transition">-0.5</button>
-                                    <input type="number" id="input-back-speed" value="1.5" min="0" step="0.1" class="flex-grow px-0.5 py-2 text-sm font-bold text-center border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-cyan-500">
-                                    <button type="button" onclick="adjustWindSpeed('back', 0.5)" class="px-0.5 py-2 bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 text-cyan-600 rounded-lg text-sm font-bold transition">+0.5</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Front Wind Panel -->
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-150">
                         <div class="flex items-center gap-1.5 mb-3">
@@ -283,6 +239,50 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Rear Wind Panel -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-150">
+                        <div class="flex items-center gap-1.5 mb-3">
+                            <div class="w-2 h-2 rounded-full bg-orange-500"></div>
+                            <h4 class="font-bold text-sm text-slate-700">後方の風</h4>
+                        </div>
+                        <div class="space-y-4">
+                            <!-- Wind Category Selector -->
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1">状態</label>
+                                <div class="grid grid-cols-3 gap-1">
+                                    <button onclick="setWindState('back', 'none')" id="btn-back-none" class="py-1.5 text-xs font-bold rounded-lg transition border bg-white border-slate-200 text-slate-700">無風</button>
+                                    <button onclick="setWindState('back', 'light')" id="btn-back-light" class="py-1.5 text-xs font-bold rounded-lg transition border bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm">微風</button>
+                                    <button onclick="setWindState('back', 'custom')" id="btn-back-custom" class="py-1.5 text-xs font-bold rounded-lg transition border bg-white border-slate-200 text-slate-700">風速指定</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Wind direction -->
+                            <div id="div-back-dir">
+                                <label class="block text-xs text-slate-500 mb-1">風向</label>
+                                <select id="select-back-dir" class="w-full p-2 text-sm rounded-lg border border-slate-300 font-bold text-slate-800 bg-white">
+                                    <option value="前">前</option>
+                                    <option value="右">右</option>
+                                    <option value="左">左</option>
+                                    <option value="後ろ">後ろ</option>
+                                    <option value="右前" selected>右前</option>
+                                    <option value="右後ろ">右後ろ</option>
+                                    <option value="左前">左前</option>
+                                    <option value="左後ろ">左後ろ</option>
+                                </select>
+                            </div>
+
+                            <!-- Wind Speed Input -->
+                            <div id="div-back-speed" class="hidden">
+                                <label class="block text-xs text-slate-500 mb-1">風速 (m/s)</label>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="adjustWindSpeed('back', -0.5)" class="px-0.5 py-2 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg text-sm font-bold transition">-0.5</button>
+                                    <input type="number" id="input-back-speed" value="1.5" min="0" step="0.1" class="flex-grow px-0.5 py-2 text-sm font-bold text-center border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-cyan-500">
+                                    <button type="button" onclick="adjustWindSpeed('back', 0.5)" class="px-0.5 py-2 bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 text-cyan-600 rounded-lg text-sm font-bold transition">+0.5</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -312,11 +312,11 @@
             </div>
             <!-- Large wind information -->
             <div class="space-y-6 mt-8">
-                <div id="overlay-wind-back" class="text-camera-heavy text-slate-800 fullscreen-nowrap">
-                    後方の風：右前から微風
-                </div>
                 <div id="overlay-wind-front" class="text-camera-heavy text-slate-800 fullscreen-nowrap">
                     前方の風：左前から微風
+                </div>
+                <div id="overlay-wind-back" class="text-camera-heavy text-slate-800 fullscreen-nowrap">
+                    後方の風：右前から微風
                 </div>
             </div>
         </div>
@@ -410,14 +410,14 @@
             tfCount: 2,     // 1 to 50
             testType: "走行試験", // 走行試験 or 飛行試験
             testRound: 1,   // integer
-            windBack: {
-                state: "light", // none, light, custom
-                dir: "右前",
-                speed: 1.5
-            },
             windFront: {
                 state: "light", // none, light, custom
                 dir: "前",
+                speed: 1.5
+            },
+            windBack: {
+                state: "light", // none, light, custom
+                dir: "右前",
                 speed: 1.5
             }
         };
@@ -507,11 +507,11 @@
                 }
             }
 
-            outWindBack.textContent = formatWind(appState.windBack, "後方の風");
-            overlayWindBack.textContent = formatWind(appState.windBack, "後方の風");
-
             outWindFront.textContent = formatWind(appState.windFront, "前方の風");
             overlayWindFront.textContent = formatWind(appState.windFront, "前方の風");
+            
+            outWindBack.textContent = formatWind(appState.windBack, "後方の風");
+            overlayWindBack.textContent = formatWind(appState.windBack, "後方の風");
 
             fitOverlayText();
         }
